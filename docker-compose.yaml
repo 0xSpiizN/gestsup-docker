@@ -1,0 +1,44 @@
+services:
+  #--------------------------------------------------
+  # GestSup
+  #--------------------------------------------------
+  gestsup-app:
+    build:
+      context: app
+      args:
+        PHP_VERSION: "8.2"
+        GESTSUP_VERSION: "3.2.50"
+    restart: always
+    container_name: gestsup-app
+    ports:
+      - '${EXTERNAL_HTTP}:80'
+    depends_on:
+      gestsup-db:
+        condition: service_healthy
+    volumes:
+      - gestsup-app-html:/var/www/html/
+
+  #--------------------------------------------------
+  # GestSup - Database
+  #--------------------------------------------------
+  gestsup-db:
+    image: mariadb
+    restart: always
+    container_name: gestsup-db
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: 'true'
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - gestsup-db-mysql:/var/lib/mysql/
+
+volumes:
+  gestsup-app-html:
+  gestsup-db-mysql:
